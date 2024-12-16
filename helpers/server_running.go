@@ -26,7 +26,7 @@ func CheckFlags() {
 		go RunDevServer()
 	} else {
 		fmt.Println("starting server in production mode")
-		fs := http.FileServer(http.Dir("../client/dist"))
+		fs := http.FileServer(http.Dir("dist"))
 		http.Handle("/", fs)
 		fmt.Println("production server running on http://localhost:8080")
 	}

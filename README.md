@@ -15,10 +15,9 @@ This is a template for a fullstack application using Go, React and Vite. This te
 
 ## Adding API endpoints
 
-To add an API endpoint, create a new file in the `handlers` directory.
-```go
-package main
-```
+To add an API endpoint, create a new file in the `handlers` directory. Check the `handlers/todo_handlers.go` file for an example.
+
+You can then add the handler to the router in the `main.go` file.
 
 ## Installation
 
