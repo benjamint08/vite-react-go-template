@@ -28,6 +28,11 @@ func CheckFlags() {
 		fmt.Println("starting server in production mode")
 		fs := http.FileServer(http.Dir("dist"))
 		http.Handle("/", fs)
+		_, err := os.Stat("dist")
+		if os.IsNotExist(err) {
+			fmt.Println("dist directory does not exist, run with -build flag to create it")
+			os.Exit(0)
+		}
 		fmt.Println("production server running on http://localhost:8080")
 	}
 }
