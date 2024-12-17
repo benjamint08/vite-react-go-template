@@ -1,3 +1,6 @@
+#
+<img src="go_react_vite_tailwind.png">
+
 # Go, React, Tailwind and Vite template
 
 By [benjamint08](https://github.com/benjamint08)
