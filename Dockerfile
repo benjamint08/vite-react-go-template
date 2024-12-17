@@ -1,4 +1,4 @@
-FROM golang:1.23.4-alpine as go-builder
+FROM golang:1.23.4-alpine AS go-builder
 WORKDIR /goapp
 COPY go.mod ./
 COPY main.go ./
@@ -7,7 +7,7 @@ COPY helpers/ ./helpers/
 RUN go mod download
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /goserver .
 
-FROM node:20-alpine as node-builder
+FROM node:20-alpine AS node-builder
 WORKDIR /nodeapp
 COPY package.json ./
 COPY package-lock.json ./
