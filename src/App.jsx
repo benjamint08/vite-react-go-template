@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import {clearTodos, addTodo, deleteTodo} from "./functions/todos.js";
 
 function App() {
     const [todos, setTodos] = useState(null)
@@ -13,60 +14,13 @@ function App() {
         fetchData();
     }, []);
 
-    async function deleteTodo(index) {
-        const response = await fetch('/api/delete-todo', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ index: index })
-        });
-        if(response.ok) {
-            setTodos(todos.filter((todo, i) => i !== index))
-        }
-    }
-
-    async function addTodo() {
-        const response = await fetch('/api/add-todo', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ todo: newTodo })
-        });
-        if(response.ok) {
-            setTodos([...todos, newTodo])
-            setNewTodo('')
-        } else {
-            const res = await response.text()
-            window.alert('Failed to add todo - ' + res)
-            window.location.reload()
-        }
-    }
-
-    async function clearTodos() {
-        const response = await fetch('/api/clear-todos', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-        if(response.ok) {
-            setTodos([])
-        } else {
-            const res = await response.text()
-            window.alert('Failed to clear todos - ' + res)
-            window.location.reload()
-        }
-    }
-
   return (
     <>
       <div className={"mt-10"}>
           <h1 className={"text-2xl font-bold text-center"}>React, Vite, Tailwind and Go Stack</h1>
           {todos && todos.length > 0 && (
               <div className={"flex mt-5 justify-center"}>
-                  <button className={"bg-red-500 text-white p-2"} onClick={clearTodos}>Clear Todos</button>
+                  <button className={"bg-red-500 text-white p-2"} onClick={(e) => clearTodos(setTodos)}>Clear Todos</button>
               </div>
           )}
           <div className={"flex mt-5 justify-center flex-col w-[50%] mx-auto"}>
@@ -74,7 +28,7 @@ function App() {
                   <ul>
                       {todos.map((todo, index) => (
                         <li key={index} className={"border border-gray-300 p-2 ml-2 mt-2"}>{todo}
-                            <span className={"text-red-500 ml-2 float-right font-bold hover:cursor-pointer"} key={"del-" + index} onClick={() => deleteTodo(index)}>X</span>
+                            <span className={"text-red-500 ml-2 float-right font-bold hover:cursor-pointer"} key={"del-" + index} onClick={() => deleteTodo(index, todos, setTodos)}>X</span>
                         </li>
                     ))}
                   </ul>
@@ -82,7 +36,7 @@ function App() {
               {todos && (
                   <>
                       <input type="text" placeholder="Add a todo" className={"border border-gray-300 p-2 ml-2 mt-2 text-black"} value={newTodo} onChange={(e) => setNewTodo(e.target.value)} />
-                      <button className={"bg-blue-500 text-white p-2 ml-2 mt-2"} onClick={addTodo}>Add</button>
+                      <button className={"bg-blue-500 text-white p-2 ml-2 mt-2"} onClick={(e) => addTodo(todos, newTodo, setTodos, setNewTodo)}>Add</button>
                   </>
               )}
           </div>
