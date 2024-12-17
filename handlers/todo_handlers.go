@@ -2,20 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
+	"git.ben.cymru/ben/mongohelper"
 	"github.com/benjamint08/vite-react-go-template/helpers"
+	"go.mongodb.org/mongo-driver/bson"
 	"net/http"
-	"os"
 )
-
-func checkTodosFile() {
-	_, err := os.Stat("todos.json")
-	if os.IsNotExist(err) {
-		err := os.WriteFile("todos.json", []byte("[]"), 0644)
-		if err != nil {
-			panic("Failed to create todos")
-		}
-	}
-}
 
 func GetTodoHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
@@ -23,13 +14,8 @@ func GetTodoHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	checkTodosFile()
-	data, err := os.ReadFile("todos.json")
-	if err != nil {
-		http.Error(w, "Failed to read todos", http.StatusInternalServerError)
-		return
-	}
-	w.Write(data)
+	todos := mongohelper.FindManyDocuments("vite-react-go", "todos", bson.D{{}})
+	json.NewEncoder(w).Encode(todos)
 }
 
 func DeleteTodoHandler(w http.ResponseWriter, r *http.Request) {
@@ -39,13 +25,6 @@ func DeleteTodoHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	body := r.Body
 	defer body.Close()
-	checkTodosFile()
-	data, err := os.ReadFile("todos.json")
-	if err != nil {
-		http.Error(w, "Failed to read todos", http.StatusInternalServerError)
-		return
-	}
-
 	bodyJson := helpers.GetJsonFromBody(r)
 	bodyMap, ok := bodyJson.(map[string]interface{})
 	if !ok {
@@ -57,23 +36,19 @@ func DeleteTodoHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var currentTodos []string
-	err = json.Unmarshal(data, &currentTodos)
-	if err != nil {
-		http.Error(w, "Failed to decode todos", http.StatusInternalServerError)
+	todo := bodyMap["todo"].(string)
+	exists := false
+	todoExists := mongohelper.FindOneDocument("vite-react-go", "todos", bson.D{{"todo", todo}})
+	if todoExists != nil {
+		exists = true
+	}
+	if !exists {
+		http.Error(w, "Todo does not exist", http.StatusBadRequest)
 		return
 	}
-	index := int(bodyMap["index"].(float64))
-	currentTodos = append(currentTodos[:index], currentTodos[index+1:]...)
-	newData, err := json.Marshal(currentTodos)
-	if err != nil {
-		http.Error(w, "Failed to encode todos", http.StatusInternalServerError)
-		return
-	}
-
-	err = os.WriteFile("todos.json", newData, 0644)
-	if err != nil {
-		http.Error(w, "Failed to write todos", http.StatusInternalServerError)
+	deleteTodo := mongohelper.DeleteOneDocument("vite-react-go", "todos", bson.D{{"todo", todo}})
+	if !deleteTodo {
+		http.Error(w, "Failed to delete todo", http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -86,12 +61,6 @@ func AddTodoHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	body := r.Body
 	defer body.Close()
-	checkTodosFile()
-	data, err := os.ReadFile("todos.json")
-	if err != nil {
-		http.Error(w, "Failed to read todos", http.StatusInternalServerError)
-		return
-	}
 
 	bodyJson := helpers.GetJsonFromBody(r)
 	bodyMap, ok := bodyJson.(map[string]interface{})
@@ -104,28 +73,19 @@ func AddTodoHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to decode body", http.StatusInternalServerError)
 	}
 
-	var currentTodos []string
-	err = json.Unmarshal(data, &currentTodos)
-	if err != nil {
-		http.Error(w, "Failed to decode todos", http.StatusInternalServerError)
-		return
-	}
-	for _, todo := range currentTodos {
-		if todo == bodyMap["todo"].(string) {
-			http.Error(w, "Todo already exists", http.StatusBadRequest)
-			return
-		}
-	}
-	currentTodos = append(currentTodos, bodyMap["todo"].(string))
-	newData, err := json.Marshal(currentTodos)
-	if err != nil {
-		http.Error(w, "Failed to encode todos", http.StatusInternalServerError)
+	userRequestedTodo := bodyMap["todo"].(string)
+	todoExists := mongohelper.FindOneDocument("vite-react-go", "todos", bson.D{{"todo", userRequestedTodo}})
+	if todoExists != nil {
+		http.Error(w, "Todo already exists", http.StatusBadRequest)
 		return
 	}
 
-	err = os.WriteFile("todos.json", newData, 0644)
-	if err != nil {
-		http.Error(w, "Failed to write todos", http.StatusInternalServerError)
+	todo := bson.D{
+		{"todo", userRequestedTodo},
+	}
+	insertedTodo := mongohelper.InsertOneDocument("vite-react-go", "todos", todo)
+	if !insertedTodo {
+		http.Error(w, "Failed to add todo", http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -136,9 +96,8 @@ func ClearTodosHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	checkTodosFile()
-	err := os.WriteFile("todos.json", []byte("[]"), 0644)
-	if err != nil {
+	clearTodos := mongohelper.DeleteManyDocuments("vite-react-go", "todos", bson.D{{}})
+	if !clearTodos {
 		http.Error(w, "Failed to clear todos", http.StatusInternalServerError)
 		return
 	}

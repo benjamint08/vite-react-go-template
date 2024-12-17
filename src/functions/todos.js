@@ -4,10 +4,11 @@ async function deleteTodo(index, todos, setTodos) {
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ index: index })
+        body: JSON.stringify({ todo: todos[index].todo })
     });
     if(response.ok) {
-        setTodos(todos.filter((todo, i) => i !== index))
+        const oneWeDontWant = todos[index].todo
+        setTodos(todos.filter(todo => todo.todo !== oneWeDontWant))
     }
 }
 
@@ -20,7 +21,9 @@ async function addTodo(todos, newTodo, setTodos, setNewTodo) {
         body: JSON.stringify({ todo: newTodo })
     });
     if(response.ok) {
-        setTodos([...todos, newTodo])
+        setTodos([...todos, {
+            todo: newTodo
+        }])
         setNewTodo('')
     } else {
         const res = await response.text()

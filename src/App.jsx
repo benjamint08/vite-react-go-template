@@ -8,8 +8,15 @@ function App() {
     useEffect(() => {
         const fetchData = async () => {
             const response = await fetch('/api/todos')
-            const data = await response.json()
-            setTodos(data)
+            try {
+                const data = await response.json()
+                if(data === null) {
+                    return setTodos([])
+                }
+                setTodos(data)
+            } catch (e) {
+                setTodos([])
+            }
         }
         fetchData();
     }, []);
@@ -27,7 +34,7 @@ function App() {
               {todos && (
                   <ul>
                       {todos.map((todo, index) => (
-                        <li key={index} className={"border border-gray-300 p-2 ml-2 mt-2"}>{todo}
+                        <li key={index} className={"border border-gray-300 p-2 ml-2 mt-2"}>{todo.todo}
                             <span className={"text-red-500 ml-2 float-right font-bold hover:cursor-pointer"} key={"del-" + index} onClick={() => deleteTodo(index, todos, setTodos)}>X</span>
                         </li>
                     ))}
