@@ -120,3 +120,17 @@ func AddTodoHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusOK)
 }
+
+func ClearTodosHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	checkTodosFile()
+	err := os.WriteFile("todos.json", []byte("[]"), 0644)
+	if err != nil {
+		http.Error(w, "Failed to clear todos", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+}

@@ -14,6 +14,7 @@ func main() {
 	http.HandleFunc("/api/todos", handlers.GetTodoHandler)
 	http.HandleFunc("/api/delete-todo", handlers.DeleteTodoHandler)
 	http.HandleFunc("/api/add-todo", handlers.AddTodoHandler)
+	http.HandleFunc("/api/clear-todos", handlers.ClearTodosHandler)
 	// End API routes
 
 	http.ListenAndServe(":8080", nil)
