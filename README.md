@@ -1,17 +1,18 @@
 #
 <img src="go_react_vite_tailwind.png">
 
-# Go, React, Tailwind and Vite template
+# Go, React, Tailwind and Vite template (mongohelper branch)
 
 By [benjamint08](https://github.com/benjamint08)
 
 ## Description
 
-This is a template for a fullstack application using Go, React and Vite. This template application is a simple todo list.
+This is a template for a fullstack application using Go, MongoDB, React and Vite. This template application is a simple todo list.
 
 ## Features
 
 - Go backend
+- MongoDB database
 - React frontend
 - Tailwind CSS
 - Vite for frontend development
@@ -33,6 +34,6 @@ You can then add the handler to the router in the `main.go` file.
 ## Production (Docker)
 
 1. Run `docker build -t <your_image_name> .`
-2. Run `docker run -d -p 8080:8080 <your_image_name>`
+2. Run `docker run -d -p 8080:8080 -e MONGO_URI="<MONGO_URI" <your_image_name>`
 3. Visit `http://localhost:8080` in your browser
 4. Success
