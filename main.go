@@ -17,5 +17,8 @@ func main() {
 	http.HandleFunc("/api/clear-todos", handlers.ClearTodosHandler)
 	// End API routes
 
-	http.ListenAndServe(":8080", nil)
+	err := http.ListenAndServe(":8080", nil)
+	if err != nil {
+		panic(err)
+	}
 }

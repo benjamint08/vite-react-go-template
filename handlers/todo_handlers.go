@@ -47,7 +47,12 @@ func DeleteTodoHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	bodyJson := helpers.GetJsonFromBody(r)
-	if bodyJson["error"] != nil {
+	bodyMap, ok := bodyJson.(map[string]interface{})
+	if !ok {
+		http.Error(w, "Failed to decode body", http.StatusInternalServerError)
+		return
+	}
+	if bodyMap["error"] != nil {
 		http.Error(w, "Failed to decode body", http.StatusInternalServerError)
 		return
 	}
@@ -58,7 +63,7 @@ func DeleteTodoHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to decode todos", http.StatusInternalServerError)
 		return
 	}
-	index := int(bodyJson["index"].(float64))
+	index := int(bodyMap["index"].(float64))
 	currentTodos = append(currentTodos[:index], currentTodos[index+1:]...)
 	newData, err := json.Marshal(currentTodos)
 	if err != nil {
@@ -89,9 +94,14 @@ func AddTodoHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	bodyJson := helpers.GetJsonFromBody(r)
-	if bodyJson["error"] != nil {
+	bodyMap, ok := bodyJson.(map[string]interface{})
+	if !ok {
 		http.Error(w, "Failed to decode body", http.StatusInternalServerError)
 		return
+	}
+
+	if bodyMap["error"] != nil {
+		http.Error(w, "Failed to decode body", http.StatusInternalServerError)
 	}
 
 	var currentTodos []string
@@ -101,12 +111,12 @@ func AddTodoHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	for _, todo := range currentTodos {
-		if todo == bodyJson["todo"].(string) {
+		if todo == bodyMap["todo"].(string) {
 			http.Error(w, "Todo already exists", http.StatusBadRequest)
 			return
 		}
 	}
-	currentTodos = append(currentTodos, bodyJson["todo"].(string))
+	currentTodos = append(currentTodos, bodyMap["todo"].(string))
 	newData, err := json.Marshal(currentTodos)
 	if err != nil {
 		http.Error(w, "Failed to encode todos", http.StatusInternalServerError)
