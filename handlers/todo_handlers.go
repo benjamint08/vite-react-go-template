@@ -2,145 +2,136 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/benjamint08/vite-react-go-template/helpers"
+	"github.com/benjamint08/vite-react-go-template/models"
 	"net/http"
 	"os"
 )
 
-func checkTodosFile() {
-	_, err := os.Stat("todos.json")
-	if os.IsNotExist(err) {
-		err := os.WriteFile("todos.json", []byte("[]"), 0644)
-		if err != nil {
-			panic("Failed to create todos")
+const todoFile = "todos.json"
+
+func readTodos() ([]string, error) {
+	if _, err := os.Stat(todoFile); os.IsNotExist(err) {
+		if err := os.WriteFile(todoFile, []byte("[]"), 0644); err != nil {
+			return nil, err
 		}
 	}
+
+	data, err := os.ReadFile(todoFile)
+	if err != nil {
+		return nil, err
+	}
+
+	var todos []string
+	if err := json.Unmarshal(data, &todos); err != nil {
+		return nil, err
+	}
+
+	return todos, nil
+}
+
+func writeTodos(todos []string) error {
+	data, err := json.Marshal(todos)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(todoFile, data, 0644)
 }
 
 func GetTodoHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	if r.Method != http.MethodGet {
+		helpers.ErrorJSON(w, http.StatusMethodNotAllowed, errors.New("method not allowed"))
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	checkTodosFile()
-	data, err := os.ReadFile("todos.json")
+
+	todos, err := readTodos()
 	if err != nil {
-		http.Error(w, "Failed to read todos", http.StatusInternalServerError)
+		helpers.ErrorJSON(w, http.StatusInternalServerError, err)
 		return
 	}
-	w.Write(data)
+
+	helpers.WriteJSON(w, http.StatusOK, todos)
 }
 
 func DeleteTodoHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-	body := r.Body
-	defer body.Close()
-	checkTodosFile()
-	data, err := os.ReadFile("todos.json")
-	if err != nil {
-		http.Error(w, "Failed to read todos", http.StatusInternalServerError)
+	if r.Method != http.MethodPost {
+		helpers.ErrorJSON(w, http.StatusMethodNotAllowed, errors.New("method not allowed"))
 		return
 	}
 
-	bodyJson := helpers.GetJsonFromBody(r)
-	bodyMap, ok := bodyJson.(map[string]interface{})
-	if !ok {
-		http.Error(w, "Failed to decode body", http.StatusInternalServerError)
-		return
-	}
-	if bodyMap["error"] != nil {
-		http.Error(w, "Failed to decode body", http.StatusInternalServerError)
+	var req models.DeleteTodoRequest
+	if err := helpers.ReadJSON(r, &req); err != nil {
+		helpers.ErrorJSON(w, http.StatusBadRequest, err)
 		return
 	}
 
-	var currentTodos []string
-	err = json.Unmarshal(data, &currentTodos)
+	todos, err := readTodos()
 	if err != nil {
-		http.Error(w, "Failed to decode todos", http.StatusInternalServerError)
-		return
-	}
-	index := int(bodyMap["index"].(float64))
-	currentTodos = append(currentTodos[:index], currentTodos[index+1:]...)
-	newData, err := json.Marshal(currentTodos)
-	if err != nil {
-		http.Error(w, "Failed to encode todos", http.StatusInternalServerError)
+		helpers.ErrorJSON(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	err = os.WriteFile("todos.json", newData, 0644)
-	if err != nil {
-		http.Error(w, "Failed to write todos", http.StatusInternalServerError)
+	if req.Index < 0 || req.Index >= len(todos) {
+		helpers.ErrorJSON(w, http.StatusBadRequest, errors.New("index out of range"))
 		return
 	}
-	w.WriteHeader(http.StatusOK)
+
+	todos = append(todos[:req.Index], todos[req.Index+1:]...)
+
+	if err := writeTodos(todos); err != nil {
+		helpers.ErrorJSON(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	helpers.WriteJSON(w, http.StatusOK, nil)
 }
 
 func AddTodoHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	if r.Method != http.MethodPost {
+		helpers.ErrorJSON(w, http.StatusMethodNotAllowed, errors.New("method not allowed"))
 		return
 	}
-	body := r.Body
-	defer body.Close()
-	checkTodosFile()
-	data, err := os.ReadFile("todos.json")
+
+	var req models.AddTodoRequest
+	if err := helpers.ReadJSON(r, &req); err != nil {
+		helpers.ErrorJSON(w, http.StatusBadRequest, err)
+		return
+	}
+
+	todos, err := readTodos()
 	if err != nil {
-		http.Error(w, "Failed to read todos", http.StatusInternalServerError)
+		helpers.ErrorJSON(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	bodyJson := helpers.GetJsonFromBody(r)
-	bodyMap, ok := bodyJson.(map[string]interface{})
-	if !ok {
-		http.Error(w, "Failed to decode body", http.StatusInternalServerError)
-		return
-	}
-
-	if bodyMap["error"] != nil {
-		http.Error(w, "Failed to decode body", http.StatusInternalServerError)
-	}
-
-	var currentTodos []string
-	err = json.Unmarshal(data, &currentTodos)
-	if err != nil {
-		http.Error(w, "Failed to decode todos", http.StatusInternalServerError)
-		return
-	}
-	for _, todo := range currentTodos {
-		if todo == bodyMap["todo"].(string) {
-			http.Error(w, "Todo already exists", http.StatusBadRequest)
+	for _, todo := range todos {
+		if todo == req.Todo {
+			helpers.ErrorJSON(w, http.StatusBadRequest, errors.New("todo already exists"))
 			return
 		}
 	}
-	currentTodos = append(currentTodos, bodyMap["todo"].(string))
-	newData, err := json.Marshal(currentTodos)
-	if err != nil {
-		http.Error(w, "Failed to encode todos", http.StatusInternalServerError)
+
+	todos = append(todos, req.Todo)
+
+	if err := writeTodos(todos); err != nil {
+		helpers.ErrorJSON(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	err = os.WriteFile("todos.json", newData, 0644)
-	if err != nil {
-		http.Error(w, "Failed to write todos", http.StatusInternalServerError)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
+	helpers.WriteJSON(w, http.StatusOK, nil)
 }
 
 func ClearTodosHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	if r.Method != http.MethodPost {
+		helpers.ErrorJSON(w, http.StatusMethodNotAllowed, errors.New("method not allowed"))
 		return
 	}
-	checkTodosFile()
-	err := os.WriteFile("todos.json", []byte("[]"), 0644)
-	if err != nil {
-		http.Error(w, "Failed to clear todos", http.StatusInternalServerError)
+
+	if err := writeTodos([]string{}); err != nil {
+		helpers.ErrorJSON(w, http.StatusInternalServerError, err)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
+
+	helpers.WriteJSON(w, http.StatusOK, nil)
 }
