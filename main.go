@@ -15,6 +15,8 @@ func main() {
 	http.HandleFunc("/api/delete-todo", handlers.DeleteTodoHandler)
 	http.HandleFunc("/api/add-todo", handlers.AddTodoHandler)
 	http.HandleFunc("/api/clear-todos", handlers.ClearTodosHandler)
+	http.HandleFunc("/api/upload", handlers.UploadFileHandler)
+	http.HandleFunc("/api/download", handlers.DownloadFileHandler)
 	// End API routes
 
 	err := http.ListenAndServe(":8080", nil)
