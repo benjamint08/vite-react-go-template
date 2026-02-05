@@ -7,7 +7,7 @@ By [benjamint08](https://github.com/benjamint08)
 
 ## Description
 
-This is a template for a fullstack application using Go, React and Vite. This template application is a simple todo list.
+This is a template for a fullstack application using Go, React and Vite. This template application is a simple todo list with a file handling API. The backend is built with Go and the frontend is built with React and Tailwind CSS. Vite is used for frontend development.
 
 ## Features
 
