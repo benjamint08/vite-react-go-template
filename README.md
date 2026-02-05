@@ -30,6 +30,28 @@ To add an API endpoint, create a new file in the `handlers` directory. Check the
 
 You can then add the handler to the router in the `main.go` file.
 
+## File Handling API
+
+This server now supports file uploads and downloads.
+
+### Uploading a file
+
+To upload a file, send a `POST` request to `/api/upload` with the file in a multipart/form-data form. The form field for the file should be named `file`.
+
+Example using `curl`:
+```bash
+curl -X POST -F "file=@/path/to/your/file.txt" http://localhost:8080/api/upload
+```
+
+### Downloading a file
+
+To download a file, send a `GET` request to `/api/download` with the `file` query parameter set to the name of the file you want to download.
+
+Example using `curl`:
+```bash
+curl -o "downloaded_file.txt" http://localhost:8080/api/download?file=your_file.txt
+```
+
 ## Production (Docker)
 
 1. Run `docker build -t <your_image_name> .`
