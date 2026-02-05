@@ -63,5 +63,6 @@ func DownloadFileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", fileName))
 	http.ServeFile(w, r, filePath)
 }
