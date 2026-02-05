@@ -16,6 +16,7 @@ func main() {
 	http.HandleFunc("/api/add-todo", handlers.AddTodoHandler)
 	http.HandleFunc("/api/clear-todos", handlers.ClearTodosHandler)
 	http.HandleFunc("/api/upload", handlers.UploadFileHandler)
+	http.HandleFunc("/api/files", handlers.ListFilesHandler)
 	http.HandleFunc("/api/download", handlers.DownloadFileHandler)
 	// End API routes
 
