@@ -9,6 +9,7 @@ By [benjamint08](https://github.com/benjamint08)
 
 This is a template for a fullstack application using Go, React and Vite. This template application is a simple todo list with a file handling API. The backend is built with Go and the frontend is built with React and Tailwind CSS. Vite is used for frontend development.
 
+If you want to use MongoDB, take a look at [this library](https://github.com/benjamint08/mon-go) that provides a simple interface for working with MongoDB in Go. It's relatively simple to set up in this project.
 ## Features
 
 - Go backend
